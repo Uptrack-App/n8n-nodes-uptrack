@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.1
+
+No code change. Published from GitHub Actions with npm provenance (0.1.0 was published from a local machine to create the package).
+- Monitor and incident IDs must be UUIDs and are URL-encoded before they enter a request path.
+
 ## 0.1.0
 
 First version.
