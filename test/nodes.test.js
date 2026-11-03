@@ -5,6 +5,9 @@ const { createHmac } = require('node:crypto');
 const { Uptrack } = require('../dist/nodes/Uptrack/Uptrack.node.js');
 const { UptrackTrigger } = require('../dist/nodes/UptrackTrigger/UptrackTrigger.node.js');
 
+const M = '0192f1c4-7c8a-7000-8000-4b1d2e3f5a6c';
+const I = '0192f1c4-7c8a-7000-8000-aaaaaaaaaaaa';
+
 // A small fake of n8n's execute context. `routes` maps "METHOD /path" to a function (options) => response.
 function fakeExecute(params, routes, { items = 1, continueOnFail = false } = {}) {
 	const calls = [];
@@ -58,8 +61,8 @@ test('monitor get many with a limit stops early', async () => {
 });
 
 test('monitor get unwraps data', async () => {
-	const { out } = await run({ resource: 'monitor', operation: 'get', monitorId: 'abc' }, { 'GET /api/monitors/abc': () => ({ data: { id: 'abc', name: 'Site' } }) });
-	assert.deepStrictEqual(out[0].json, { id: 'abc', name: 'Site' });
+	const { out } = await run({ resource: 'monitor', operation: 'get', monitorId: M }, { [`GET /api/monitors/${M}`]: () => ({ data: { id: M, name: 'Site' } }) });
+	assert.deepStrictEqual(out[0].json, { id: M, name: 'Site' });
 });
 
 test('monitor create sends the minimal body and the optional fields', async () => {
@@ -80,16 +83,16 @@ test('heartbeat create leaves url out when empty', async () => {
 
 test('monitor update needs at least one field', async () => {
 	await assert.rejects(
-		run({ resource: 'monitor', operation: 'update', monitorId: 'abc', updateFields: {} }, {}),
+		run({ resource: 'monitor', operation: 'update', monitorId: M, updateFields: {} }, {}),
 		/at least one field/,
 	);
 });
 
 for (const action of ['pause', 'resume', 'delete']) {
 	test(`monitor ${action} uses the bulk endpoint`, async () => {
-		const { out, calls } = await run({ resource: 'monitor', operation: action, monitorId: 'abc' }, { 'POST /api/monitors/bulk': () => ({ data: { count: 1, action } }) });
-		assert.deepStrictEqual(calls[0].body, { action, monitor_ids: ['abc'] });
-		assert.deepStrictEqual(out[0].json, { success: true, action, monitorId: 'abc' });
+		const { out, calls } = await run({ resource: 'monitor', operation: action, monitorId: M }, { 'POST /api/monitors/bulk': () => ({ data: { count: 1, action } }) });
+		assert.deepStrictEqual(calls[0].body, { action, monitor_ids: [M] });
+		assert.deepStrictEqual(out[0].json, { success: true, action, monitorId: M });
 	});
 }
 
@@ -103,26 +106,26 @@ test('incident get many filters ongoing and applies the limit', async () => {
 });
 
 test('incident get and acknowledge merge the incident with its updates', async () => {
-	const reply = { data: { incident: { id: 'i1', status: 'ongoing' }, updates: [{ id: 'u1' }] } };
-	const get = await run({ resource: 'incident', operation: 'get', incidentId: 'i1' }, { 'GET /api/incidents/i1': () => reply });
-	assert.deepStrictEqual(get.out[0].json, { id: 'i1', status: 'ongoing', updates: [{ id: 'u1' }] });
-	const ack = await run({ resource: 'incident', operation: 'acknowledge', incidentId: 'i1' }, { 'POST /api/incidents/i1/acknowledge': () => reply });
+	const reply = { data: { incident: { id: I, status: 'ongoing' }, updates: [{ id: 'u1' }] } };
+	const get = await run({ resource: 'incident', operation: 'get', incidentId: I }, { [`GET /api/incidents/${I}`]: () => reply });
+	assert.deepStrictEqual(get.out[0].json, { id: I, status: 'ongoing', updates: [{ id: 'u1' }] });
+	const ack = await run({ resource: 'incident', operation: 'acknowledge', incidentId: I }, { [`POST /api/incidents/${I}/acknowledge`]: () => reply });
 	assert.strictEqual(ack.calls[0].method, 'POST');
-	assert.strictEqual(ack.out[0].json.id, 'i1');
+	assert.strictEqual(ack.out[0].json.id, I);
 });
 
 test('incident post update sends status plus the optional text', async () => {
 	const { calls } = await run(
-		{ resource: 'incident', operation: 'postUpdate', incidentId: 'i1', status: 'resolved', updateFields: { description: 'Fixed' } },
-		{ 'POST /api/incidents/i1/updates': () => ({ data: { incident: { id: 'i1' }, updates: [] } }) },
+		{ resource: 'incident', operation: 'postUpdate', incidentId: I, status: 'resolved', updateFields: { description: 'Fixed' } },
+		{ [`POST /api/incidents/${I}/updates`]: () => ({ data: { incident: { id: I }, updates: [] } }) },
 	);
 	assert.deepStrictEqual(calls[0].body, { status: 'resolved', description: 'Fixed' });
 });
 
 test('an API error becomes a node error, or an error item with continue on fail', async () => {
-	const failing = { 'GET /api/monitors/abc': () => { throw { httpCode: '404', message: 'Not found', description: 'no such monitor' }; } };
-	await assert.rejects(run({ resource: 'monitor', operation: 'get', monitorId: 'abc' }, failing), (e) => e.constructor.name === 'NodeApiError');
-	const { out } = await run({ resource: 'monitor', operation: 'get', monitorId: 'abc' }, failing, { continueOnFail: true });
+	const failing = { [`GET /api/monitors/${M}`]: () => { throw { httpCode: '404', message: 'Not found', description: 'no such monitor' }; } };
+	await assert.rejects(run({ resource: 'monitor', operation: 'get', monitorId: M }, failing), (e) => e.constructor.name === 'NodeApiError');
+	const { out } = await run({ resource: 'monitor', operation: 'get', monitorId: M }, failing, { continueOnFail: true });
 	assert.ok(out[0].json.error);
 });
 
@@ -174,4 +177,34 @@ test('trigger credential test checks the whsec_ shape', async () => {
 	const t = new UptrackTrigger().methods.credentialTest.uptrackWebhookApiTest;
 	assert.strictEqual((await t.call({}, { data: { signingSecret: 'whsec_abcdefghij' } })).status, 'OK');
 	assert.strictEqual((await t.call({}, { data: { signingSecret: 'nope' } })).status, 'Error');
+});
+
+// ---- path injection: an ID is a UUID or the call is refused before any request
+for (const bad of ['../api-keys', 'abc/def', `${M}/../../api-keys`, `${M}?x=1`, `${M}#`, '', '   ', 'abc', '%2e%2e/api-keys', `${M}\n../x`, `${M}\t../x`]) {
+	test(`refuses the monitor ID ${JSON.stringify(bad)} without calling the API`, async () => {
+		const { context, calls } = fakeExecute({ resource: 'monitor', operation: 'get', monitorId: bad }, {});
+		await assert.rejects(new Uptrack().execute.call(context), /must be a UUID/);
+		assert.strictEqual(calls.length, 0);
+	});
+}
+
+for (const op of ['get', 'acknowledge', 'postUpdate']) {
+	test(`refuses a bad incident ID for ${op} without calling the API`, async () => {
+		const { context, calls } = fakeExecute({ resource: 'incident', operation: op, incidentId: '../monitors', status: 'resolved' }, {});
+		await assert.rejects(new Uptrack().execute.call(context), /must be a UUID/);
+		assert.strictEqual(calls.length, 0);
+	});
+}
+
+test('refuses a bad ID for pause, resume, delete and update', async () => {
+	for (const operation of ['pause', 'resume', 'delete', 'update']) {
+		const { context, calls } = fakeExecute({ resource: 'monitor', operation, monitorId: '../x', updateFields: { name: 'n' } }, {});
+		await assert.rejects(new Uptrack().execute.call(context), /must be a UUID/);
+		assert.strictEqual(calls.length, 0);
+	}
+});
+
+test('accepts upper case UUIDs and trims spaces', async () => {
+	const { calls } = await run({ resource: 'monitor', operation: 'get', monitorId: `  ${M.toUpperCase()} ` }, { [`GET /api/monitors/${M.toUpperCase()}`]: () => ({ data: {} }) });
+	assert.strictEqual(calls[0].path, `/api/monitors/${M.toUpperCase()}`);
 });

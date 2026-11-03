@@ -5,7 +5,7 @@ import type {
 	IHttpRequestOptions,
 	JsonObject,
 } from 'n8n-workflow';
-import { NodeApiError } from 'n8n-workflow';
+import { NodeApiError, NodeOperationError } from 'n8n-workflow';
 
 /** One call to the Uptrack API with the API key of the selected credential. */
 export async function uptrackApiRequest(
@@ -67,3 +67,25 @@ export async function uptrackGetAllMonitors(
 		page += 1;
 	}
 }
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * Reads a monitor or incident ID and checks that it is a UUID, which is what the Uptrack API uses.
+ * The value goes into a URL path, and it can come from earlier workflow data. A value such as
+ * `../api-keys` must never change which endpoint is called, so anything else is refused.
+ */
+export function getIdParameter(this: IExecuteFunctions, name: string, itemIndex: number): string {
+	const value = String(this.getNodeParameter(name, itemIndex, '')).trim();
+	if (!UUID.test(value)) {
+		throw new NodeOperationError(
+			this.getNode(),
+			`The ${name === 'monitorId' ? 'monitor' : 'incident'} ID must be a UUID like 0192f1c4-7c8a-7000-8000-4b1d2e3f5a6c`,
+			{ itemIndex },
+		);
+	}
+	return value;
+}
+
+/** An ID for use in a URL path, encoded as well as validated. */
+export const pathId = (id: string): string => encodeURIComponent(id);

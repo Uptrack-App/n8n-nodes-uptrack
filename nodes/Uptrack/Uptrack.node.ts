@@ -8,7 +8,12 @@ import type {
 } from 'n8n-workflow';
 import { NodeApiError, NodeConnectionTypes, NodeOperationError } from 'n8n-workflow';
 
-import { uptrackApiRequest, uptrackGetAllMonitors } from './GenericFunctions';
+import {
+	getIdParameter,
+	pathId,
+	uptrackApiRequest,
+	uptrackGetAllMonitors,
+} from './GenericFunctions';
 import { incidentFields, incidentOperations } from './IncidentDescription';
 import { monitorFields, monitorOperations } from './MonitorDescription';
 
@@ -71,8 +76,8 @@ export class Uptrack implements INodeType {
 						const filters = this.getNodeParameter('filters', i, {}) as IDataObject;
 						results = await uptrackGetAllMonitors.call(this, filters, limit);
 					} else if (operation === 'get') {
-						const id = this.getNodeParameter('monitorId', i) as string;
-						const response = await uptrackApiRequest.call(this, 'GET', `/api/monitors/${id}`);
+						const id = getIdParameter.call(this, 'monitorId', i);
+						const response = await uptrackApiRequest.call(this, 'GET', `/api/monitors/${pathId(id)}`);
 						results = [response.data as IDataObject];
 					} else if (operation === 'create') {
 						const body: IDataObject = {
@@ -85,17 +90,17 @@ export class Uptrack implements INodeType {
 						const response = await uptrackApiRequest.call(this, 'POST', '/api/monitors', body);
 						results = [response.data as IDataObject];
 					} else if (operation === 'update') {
-						const id = this.getNodeParameter('monitorId', i) as string;
+						const id = getIdParameter.call(this, 'monitorId', i);
 						const body = this.getNodeParameter('updateFields', i, {}) as IDataObject;
 						if (Object.keys(body).length === 0) {
 							throw new NodeOperationError(this.getNode(), 'Add at least one field to update', {
 								itemIndex: i,
 							});
 						}
-						const response = await uptrackApiRequest.call(this, 'PATCH', `/api/monitors/${id}`, body);
+						const response = await uptrackApiRequest.call(this, 'PATCH', `/api/monitors/${pathId(id)}`, body);
 						results = [response.data as IDataObject];
 					} else if (['pause', 'resume', 'delete'].includes(operation)) {
-						const id = this.getNodeParameter('monitorId', i) as string;
+						const id = getIdParameter.call(this, 'monitorId', i);
 						await uptrackApiRequest.call(this, 'POST', '/api/monitors/bulk', {
 							action: operation,
 							monitor_ids: [id],
@@ -116,15 +121,15 @@ export class Uptrack implements INodeType {
 						results = (response.data as IDataObject[] | undefined) ?? [];
 						if (!returnAll) results = results.slice(0, this.getNodeParameter('limit', i) as number);
 					} else if (operation === 'get' || operation === 'acknowledge') {
-						const id = this.getNodeParameter('incidentId', i) as string;
+						const id = getIdParameter.call(this, 'incidentId', i);
 						const response =
 							operation === 'get'
-								? await uptrackApiRequest.call(this, 'GET', `/api/incidents/${id}`)
-								: await uptrackApiRequest.call(this, 'POST', `/api/incidents/${id}/acknowledge`);
+								? await uptrackApiRequest.call(this, 'GET', `/api/incidents/${pathId(id)}`)
+								: await uptrackApiRequest.call(this, 'POST', `/api/incidents/${pathId(id)}/acknowledge`);
 						const data = response.data as IDataObject;
 						results = [{ ...(data.incident as IDataObject), updates: data.updates }];
 					} else if (operation === 'postUpdate') {
-						const id = this.getNodeParameter('incidentId', i) as string;
+						const id = getIdParameter.call(this, 'incidentId', i);
 						const body: IDataObject = {
 							status: this.getNodeParameter('status', i) as string,
 							...(this.getNodeParameter('updateFields', i, {}) as IDataObject),
@@ -132,7 +137,7 @@ export class Uptrack implements INodeType {
 						const response = await uptrackApiRequest.call(
 							this,
 							'POST',
-							`/api/incidents/${id}/updates`,
+							`/api/incidents/${pathId(id)}/updates`,
 							body,
 						);
 						const data = response.data as IDataObject;
