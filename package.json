@@ -18,7 +18,7 @@
     },
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/hoangbits/n8n-nodes-uptrack.git"
+        "url": "git+https://github.com/Uptrack-App/n8n-nodes-uptrack.git"
     },
     "scripts": {
         "build": "n8n-node build",

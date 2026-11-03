@@ -64,4 +64,4 @@ Built with `n8n-node` 0.55 and `n8n-workflow`. Tested with a fake n8n runtime (2
 
 ## License
 
-[MIT](https://github.com/hoangbits/n8n-nodes-uptrack/blob/main/LICENSE.md)
+[MIT](https://github.com/Uptrack-App/n8n-nodes-uptrack/blob/main/LICENSE.md)
