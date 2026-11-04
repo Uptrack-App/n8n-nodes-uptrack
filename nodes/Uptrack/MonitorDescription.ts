@@ -108,10 +108,11 @@ export const monitorFields: INodeProperties[] = [
 		displayName: 'URL',
 		name: 'url',
 		type: 'string',
+		required: true,
 		default: '',
 		placeholder: 'https://example.com',
-		displayOptions: { show: show(['create']) },
-		description: 'The address to check. Leave empty for a heartbeat monitor.',
+		displayOptions: { show: { resource: ['monitor'], operation: ['create'], monitorType: ['http'] } },
+		description: 'The address to check',
 	},
 	{
 		displayName: 'Additional Fields',

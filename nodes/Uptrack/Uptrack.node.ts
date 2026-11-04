@@ -110,7 +110,8 @@ export class Uptrack implements INodeType {
 				} else if (resource === 'incident') {
 					if (operation === 'getAll') {
 						const returnAll = this.getNodeParameter('returnAll', i) as boolean;
-						const onlyOngoing = this.getNodeParameter('onlyOngoing', i) as boolean;
+						const filters = this.getNodeParameter('filters', i, {}) as IDataObject;
+						const onlyOngoing = filters.onlyOngoing === true;
 						const response = await uptrackApiRequest.call(
 							this,
 							'GET',

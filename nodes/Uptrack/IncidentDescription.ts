@@ -42,14 +42,6 @@ export const incidentFields: INodeProperties[] = [
 
 	// Get Many
 	{
-		displayName: 'Only Ongoing',
-		name: 'onlyOngoing',
-		type: 'boolean',
-		default: true,
-		displayOptions: { show: show(['getAll']) },
-		description: 'Whether to return only incidents that are still open',
-	},
-	{
 		displayName: 'Return All',
 		name: 'returnAll',
 		type: 'boolean',
@@ -66,6 +58,24 @@ export const incidentFields: INodeProperties[] = [
 		displayOptions: { show: { resource: ['incident'], operation: ['getAll'], returnAll: [false] } },
 		description: 'Max number of results to return',
 	},
+	{
+		displayName: 'Filters',
+		name: 'filters',
+		type: 'collection',
+		placeholder: 'Add Filter',
+		default: {},
+		displayOptions: { show: show(['getAll']) },
+		options: [
+			{
+				displayName: 'Only Ongoing',
+				name: 'onlyOngoing',
+				type: 'boolean',
+				default: true,
+				description: 'Whether to return only incidents that are still open',
+			},
+		],
+	},
+
 
 	// Post Update
 	{
