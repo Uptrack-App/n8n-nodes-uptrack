@@ -98,11 +98,20 @@ for (const action of ['pause', 'resume', 'delete']) {
 
 test('incident get many filters ongoing and applies the limit', async () => {
 	const { out, calls } = await run(
-		{ resource: 'incident', operation: 'getAll', returnAll: false, limit: 2, onlyOngoing: true },
+		{ resource: 'incident', operation: 'getAll', returnAll: false, limit: 2, filters: { onlyOngoing: true } },
 		{ 'GET /api/incidents': () => ({ data: [{ id: 'a' }, { id: 'b' }, { id: 'c' }] }) },
 	);
 	assert.strictEqual(out.length, 2);
 	assert.deepStrictEqual(calls[0].qs, { status: 'ongoing' });
+});
+
+test('incident get many without the filter returns every incident', async () => {
+	const { out, calls } = await run(
+		{ resource: 'incident', operation: 'getAll', returnAll: true, filters: {} },
+		{ 'GET /api/incidents': () => ({ data: [{ id: 'a' }, { id: 'b' }] }) },
+	);
+	assert.strictEqual(out.length, 2);
+	assert.deepStrictEqual(calls[0].qs, {});
 });
 
 test('incident get and acknowledge merge the incident with its updates', async () => {

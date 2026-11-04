@@ -1,6 +1,6 @@
 {
     "name": "n8n-nodes-uptrack",
-    "version": "0.1.1",
+    "version": "0.1.2",
     "description": "n8n node for Uptrack: manage uptime monitors and incidents, and start workflows when a monitor goes down or recovers",
     "license": "MIT",
     "homepage": "https://uptrack.app/integrations/n8n",

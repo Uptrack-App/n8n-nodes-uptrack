@@ -30,13 +30,15 @@ The **Uptrack Trigger** node checks the signature of each request. It needs the 
 | Resource | Operations |
 |---|---|
 | Monitor | Get Many (search and category filters, Return All), Get, Create (HTTP or Heartbeat), Update, Pause, Resume, Delete |
-| Incident | Get Many (only ongoing, or all), Get (with its updates), Acknowledge, Post Update (investigating, identified, monitoring, resolved) |
+| Incident | Get Many (Filters: only ongoing), Get (with its updates), Acknowledge, Post Update (investigating, identified, monitoring, resolved) |
 
 "Resolved" on Post Update also closes the incident, as in the Uptrack dashboard. Pause, Resume and Delete use Uptrack's bulk endpoint with one monitor.
 
 ## Uptrack Trigger node
 
 Starts a workflow when Uptrack sends a **Monitor Down**, **Monitor Recovered**, or **Third-Party Status Unreadable** event.
+
+Webhook alert channels need a paid Uptrack plan, so the trigger does not work on the free plan.
 
 Set up:
 

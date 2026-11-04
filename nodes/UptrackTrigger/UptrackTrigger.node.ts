@@ -45,13 +45,6 @@ export class UptrackTrigger implements INodeType {
 		],
 		properties: [
 			{
-				displayName:
-					'In Uptrack, add an alert channel of type Webhook and paste this node\'s webhook URL into it. Webhook alert channels need a paid Uptrack plan. Copy the signing secret that Uptrack shows once into the credential of this node.',
-				name: 'notice',
-				type: 'notice',
-				default: '',
-			},
-			{
 				displayName: 'Events',
 				name: 'events',
 				type: 'multiOptions',
